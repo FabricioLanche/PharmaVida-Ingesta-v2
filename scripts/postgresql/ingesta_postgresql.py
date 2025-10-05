@@ -25,38 +25,46 @@ def table_exists(engine, table_name):
     return table_name in inspector.get_table_names()
 
 
-def extract_productos(engine):
-    """Extrae datos de la tabla productos"""
-    if not table_exists(engine, 'productos'):
-        raise ValueError("La tabla 'productos' no existe en PostgreSQL")
+def extract_usuarios(engine):
+    """Extrae datos de la tabla users (sin password)"""
+    if not table_exists(engine, 'users'):
+        raise ValueError("La tabla 'users' no existe en PostgreSQL")
 
-    query = text("SELECT * FROM productos")
+    query = text("""
+        SELECT id, dni, apellido, distrito, email, nombre, role
+        FROM users 
+        ORDER BY id
+    """)
     df = pd.read_sql(query, engine)
     return df
 
 
-def extract_ofertas(engine):
-    """Extrae datos de las tablas ofertas y ofertas_detalle con JOIN"""
-    if not table_exists(engine, 'ofertas'):
-        raise ValueError("La tabla 'ofertas' no existe en PostgreSQL")
+def extract_compras(engine):
+    """Extrae datos de la tabla compras"""
+    if not table_exists(engine, 'compras'):
+        raise ValueError("La tabla 'compras' no existe en PostgreSQL")
 
-    if not table_exists(engine, 'ofertas_detalle'):
-        raise ValueError("La tabla 'ofertas_detalle' no existe en PostgreSQL")
+    query = text("SELECT * FROM compras ORDER BY id")
+    df = pd.read_sql(query, engine)
+    return df
 
-    query = text("""
-        SELECT 
-            o.id as oferta_id,
-            o.fecha_vencimiento,
-            o.fecha_creacion,
-            o.fecha_actualizacion,
-            od.id as detalle_id,
-            od.producto_id,
-            od.descuento
-        FROM ofertas o
-        LEFT JOIN ofertas_detalle od ON o.id = od.oferta_id
-        ORDER BY o.id, od.id
-    """)
 
+def extract_compra_productos(engine):
+    """Extrae datos de la tabla compra_productos"""
+    if not table_exists(engine, 'compra_productos'):
+        raise ValueError("La tabla 'compra_productos' no existe en PostgreSQL")
+
+    query = text("SELECT * FROM compra_productos ORDER BY compra_id")
+    df = pd.read_sql(query, engine)
+    return df
+
+
+def extract_compra_cantidades(engine):
+    """Extrae datos de la tabla compra_cantidades"""
+    if not table_exists(engine, 'compra_cantidades'):
+        raise ValueError("La tabla 'compra_cantidades' no existe en PostgreSQL")
+
+    query = text("SELECT * FROM compra_cantidades ORDER BY compra_id")
     df = pd.read_sql(query, engine)
     return df
 
@@ -72,29 +80,61 @@ def main():
 
         resultados = {}
 
-        # Extraer y subir productos
+        # Extraer y subir usuarios
         try:
-            df_productos = extract_productos(engine)
-            url_productos = s3_uploader.upload_dataframe(df_productos, 'postgresql', 'productos')
-            resultados['productos'] = {
-                'url': url_productos,
-                'registros': len(df_productos)
+            df_usuarios = extract_usuarios(engine)
+            url_usuarios = s3_uploader.upload_dataframe(df_usuarios, 'usuarios', 'usuarios')
+            resultados['usuarios'] = {
+                'url': url_usuarios,
+                'registros': len(df_usuarios),
+                'formato': 'CSV'
             }
         except Exception as e:
-            resultados['productos'] = {
+            resultados['usuarios'] = {
                 'error': str(e)
             }
 
-        # Extraer y subir ofertas
+        # Extraer y subir compras
         try:
-            df_ofertas = extract_ofertas(engine)
-            url_ofertas = s3_uploader.upload_dataframe(df_ofertas, 'postgresql', 'ofertas_completo')
-            resultados['ofertas'] = {
-                'url': url_ofertas,
-                'registros': len(df_ofertas)
+            df_compras = extract_compras(engine)
+            url_compras = s3_uploader.upload_dataframe(df_compras, 'compras', 'compras')
+            resultados['compras'] = {
+                'url': url_compras,
+                'registros': len(df_compras),
+                'formato': 'CSV'
             }
         except Exception as e:
-            resultados['ofertas'] = {
+            resultados['compras'] = {
+                'error': str(e)
+            }
+
+        # Extraer y subir compra_productos
+        try:
+            df_compra_productos = extract_compra_productos(engine)
+            url_compra_productos = s3_uploader.upload_dataframe(df_compra_productos, 'compra_productos',
+                                                                'compra_productos')
+            resultados['compra_productos'] = {
+                'url': url_compra_productos,
+                'registros': len(df_compra_productos),
+                'formato': 'CSV'
+            }
+        except Exception as e:
+            resultados['compra_productos'] = {
+                'error': str(e)
+            }
+
+        # Extraer y subir compra_cantidades
+        try:
+            df_compra_cantidades = extract_compra_cantidades(engine)
+            url_compra_cantidades = s3_uploader.upload_dataframe(df_compra_cantidades, 'compra_cantidades',
+                                                                 'compra_cantidades')
+            resultados['compra_cantidades'] = {
+                'url': url_compra_cantidades,
+                'registros': len(df_compra_cantidades),
+                'formato': 'CSV'
+            }
+        except Exception as e:
+            resultados['compra_cantidades'] = {
                 'error': str(e)
             }
 

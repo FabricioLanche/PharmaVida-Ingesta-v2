@@ -46,18 +46,13 @@ class DockerOrchestrator:
                 "MONGO_DATABASE": settings.MONGO_DATABASE,
             })
 
-            # Configurar volúmenes solo si el archivo existe
-            volumes = {}
-            try:
-                import os
-                aws_creds_path = os.path.expanduser('~/.aws/credentials')
-                if os.path.exists(aws_creds_path):
-                    volumes[aws_creds_path] = {
-                        'bind': '/root/.aws/credentials',
-                        'mode': 'ro'
-                    }
-            except:
-                pass
+            # Montar credenciales AWS desde el contenedor del gateway
+            volumes = {
+                '/root/.aws/credentials': {
+                    'bind': '/root/.aws/credentials',
+                    'mode': 'ro'
+                }
+            }
 
             container = self.client.containers.run(
                 image="pharmavida-ingesta-mongodb:latest",
@@ -112,10 +107,19 @@ class DockerOrchestrator:
                 "MYSQL_DATABASE": settings.MYSQL_DATABASE,
             })
 
+            # Montar credenciales AWS desde el contenedor del gateway
+            volumes = {
+                '/root/.aws/credentials': {
+                    'bind': '/root/.aws/credentials',
+                    'mode': 'ro'
+                }
+            }
+
             container = self.client.containers.run(
                 image="pharmavida-ingesta-mysql:latest",
                 environment=env_vars,
                 network=settings.DOCKER_NETWORK,
+                volumes=volumes,
                 remove=True,
                 detach=False
             )
@@ -164,10 +168,19 @@ class DockerOrchestrator:
                 "POSTGRES_DATABASE": settings.POSTGRES_DATABASE,
             })
 
+            # Montar credenciales AWS desde el contenedor del gateway
+            volumes = {
+                '/root/.aws/credentials': {
+                    'bind': '/root/.aws/credentials',
+                    'mode': 'ro'
+                }
+            }
+
             container = self.client.containers.run(
                 image="pharmavida-ingesta-postgresql:latest",
                 environment=env_vars,
                 network=settings.DOCKER_NETWORK,
+                volumes=volumes,
                 remove=True,
                 detach=False
             )
