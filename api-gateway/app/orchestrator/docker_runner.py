@@ -17,10 +17,18 @@ class DockerOrchestrator:
 
     def _get_common_env(self) -> Dict[str, str]:
         """Retorna variables de entorno comunes para todos los scripts"""
-        return {
+        env = {
             "AWS_BUCKET_NAME": settings.AWS_BUCKET_NAME,
             "AWS_REGION": settings.AWS_REGION,
+            "AWS_ACCESS_KEY_ID": settings.AWS_ACCESS_KEY_ID,
+            "AWS_SECRET_ACCESS_KEY": settings.AWS_SECRET_ACCESS_KEY,
         }
+
+        # Agregar session token si existe
+        if settings.AWS_SESSION_TOKEN:
+            env["AWS_SESSION_TOKEN"] = settings.AWS_SESSION_TOKEN
+
+        return env
 
     def _parse_container_output(self, output: bytes) -> Dict[str, Any]:
         """Parsea la salida del contenedor"""
@@ -46,19 +54,10 @@ class DockerOrchestrator:
                 "MONGO_DATABASE": settings.MONGO_DATABASE,
             })
 
-            # Montar credenciales AWS desde el contenedor del gateway
-            volumes = {
-                '/root/.aws/credentials': {
-                    'bind': '/root/.aws/credentials',
-                    'mode': 'ro'
-                }
-            }
-
             container = self.client.containers.run(
                 image="pharmavida-ingesta-mongodb:latest",
                 environment=env_vars,
                 network=settings.DOCKER_NETWORK,
-                volumes=volumes,
                 remove=True,
                 detach=False
             )
@@ -107,19 +106,10 @@ class DockerOrchestrator:
                 "MYSQL_DATABASE": settings.MYSQL_DATABASE,
             })
 
-            # Montar credenciales AWS desde el contenedor del gateway
-            volumes = {
-                '/root/.aws/credentials': {
-                    'bind': '/root/.aws/credentials',
-                    'mode': 'ro'
-                }
-            }
-
             container = self.client.containers.run(
                 image="pharmavida-ingesta-mysql:latest",
                 environment=env_vars,
                 network=settings.DOCKER_NETWORK,
-                volumes=volumes,
                 remove=True,
                 detach=False
             )
@@ -168,19 +158,10 @@ class DockerOrchestrator:
                 "POSTGRES_DATABASE": settings.POSTGRES_DATABASE,
             })
 
-            # Montar credenciales AWS desde el contenedor del gateway
-            volumes = {
-                '/root/.aws/credentials': {
-                    'bind': '/root/.aws/credentials',
-                    'mode': 'ro'
-                }
-            }
-
             container = self.client.containers.run(
                 image="pharmavida-ingesta-postgresql:latest",
                 environment=env_vars,
                 network=settings.DOCKER_NETWORK,
-                volumes=volumes,
                 remove=True,
                 detach=False
             )

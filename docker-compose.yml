@@ -10,13 +10,12 @@ services:
     volumes:
       # Montar socket de Docker para ejecutar contenedores
       - /var/run/docker.sock:/var/run/docker.sock
-      # Montar credenciales AWS (opcional, también se pueden pasar las imágenes)
+      # Montar credenciales AWSd
       - ~/.aws/credentials:/root/.aws/credentials:ro
     restart: unless-stopped
     networks:
       - pharmavida_network
 
-# Red compartida (debe coincidir con la red de las BD's si están en el mismo host)
 networks:
   pharmavida_network:
     driver: bridge

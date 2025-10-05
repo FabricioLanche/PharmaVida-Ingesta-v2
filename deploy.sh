@@ -46,7 +46,7 @@ echo ""
 
 # 4. Detener contenedores previos
 echo "🛑 Deteniendo contenedores previos..."
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 echo ""
 
 # 5. Construir imágenes de scripts
@@ -64,11 +64,11 @@ echo ""
 
 # 6. Construir y levantar API Gateway
 echo "🏗️  Construyendo API Gateway..."
-docker-compose build --no-cache
+docker compose build --no-cache
 echo ""
 
 echo "🚀 Levantando API Gateway..."
-docker-compose up -d
+docker compose up -d
 echo ""
 
 # 7. Esperar que el servicio esté listo
@@ -77,7 +77,7 @@ sleep 5
 
 # 8. Verificar estado
 echo "🔍 Verificando estado del servicio..."
-if docker-compose ps | grep -q "Up"; then
+if docker compose ps | grep -q "Up"; then
     echo "✅ API Gateway está corriendo"
     echo ""
 
@@ -87,12 +87,12 @@ if docker-compose ps | grep -q "Up"; then
         echo "✅ Health check exitoso"
     else
         echo "⚠️  Health check falló, verificando logs..."
-        docker-compose logs --tail=20
+        docker compose logs --tail=20
     fi
 else
     echo "❌ Error: El contenedor no está corriendo"
     echo "📋 Logs:"
-    docker-compose logs
+    docker compose logs -f
     exit 1
 fi
 
@@ -110,7 +110,7 @@ echo "📦 Imágenes construidas:"
 docker images | grep pharmavida-ingesta
 echo ""
 echo "🐳 Contenedores activos:"
-docker-compose ps
+docker compose ps
 echo ""
 echo "🧪 Prueba los endpoints:"
 echo "   curl -X POST http://localhost:8000/api/ingesta/mongodb"
@@ -118,8 +118,8 @@ echo "   curl -X POST http://localhost:8000/api/ingesta/mysql"
 echo "   curl -X POST http://localhost:8000/api/ingesta/postgresql"
 echo ""
 echo "📊 Ver logs:"
-echo "   docker-compose logs -f"
+echo "   docker compose logs -f"
 echo ""
 echo "🛑 Detener servicio:"
-echo "   docker-compose down"
+echo "   docker compose down"
 echo ""
