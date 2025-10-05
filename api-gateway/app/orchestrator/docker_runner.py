@@ -1,14 +1,17 @@
 import docker
 from docker.errors import ContainerError, ImageNotFound, APIError
 from typing import Dict, Any
-from ..core.config import settings
+from app.core.config import settings
 import json
 
 
 class DockerOrchestrator:
     def __init__(self):
         try:
-            self.client = docker.from_env()
+            # Conectar explícitamente al socket de Docker
+            self.client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+            # Verificar conexión
+            self.client.ping()
         except Exception as e:
             raise RuntimeError(f"No se pudo conectar al Docker daemon: {str(e)}")
 
@@ -43,16 +46,24 @@ class DockerOrchestrator:
                 "MONGO_DATABASE": settings.MONGO_DATABASE,
             })
 
+            # Configurar volúmenes solo si el archivo existe
+            volumes = {}
+            try:
+                import os
+                aws_creds_path = os.path.expanduser('~/.aws/credentials')
+                if os.path.exists(aws_creds_path):
+                    volumes[aws_creds_path] = {
+                        'bind': '/root/.aws/credentials',
+                        'mode': 'ro'
+                    }
+            except:
+                pass
+
             container = self.client.containers.run(
                 image="pharmavida-ingesta-mongodb:latest",
                 environment=env_vars,
                 network=settings.DOCKER_NETWORK,
-                volumes={
-                    f"{settings.Config.env_file.parent.absolute()}/.aws/credentials": {
-                        'bind': '/root/.aws/credentials',
-                        'mode': 'ro'
-                    }
-                } if hasattr(settings.Config.env_file, 'parent') else {},
+                volumes=volumes,
                 remove=True,
                 detach=False
             )

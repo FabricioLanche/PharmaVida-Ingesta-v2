@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     AWS_BUCKET_NAME: str
     AWS_REGION: Optional[str] = "us-east-1"
 
-    # Docker Network
+    # Docker Network (opcional, solo si BD's en mismo host Docker)
     DOCKER_NETWORK: Optional[str] = "bridge"
 
     class Config:

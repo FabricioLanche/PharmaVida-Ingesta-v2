@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # API Gateway - Único servicio activo
   api-gateway:
